@@ -25,7 +25,7 @@ const GET_NEWS_BY_LANGUAGE_QUERY = gql`
       readMoreContent
       title
       url
-      urlToImage
+      newsVideo
       language
     }
   }

@@ -1,31 +1,35 @@
-import tw from "twrnc";
-import React, { useState } from "react";
-import { useRouter } from "expo-router";
-import ImageViewer from "../app/ImageViewer";
-import { useBookmarks } from "../context/BookmarkContext";
-import UseDynamicStyles from "../context/UseDynamicStyles";
 import {
   Text,
   View,
-  Image,
-  Dimensions,
-  TouchableOpacity,
   Modal,
-  TextInput,
   Button,
   Alert,
+  TextInput,
+  Dimensions,
+  TouchableOpacity,
+  Image,
 } from "react-native";
+import tw from "twrnc";
+import { Video } from "expo-av";
+import { useRouter } from "expo-router";
+import ImageViewer from "../app/ImageViewer";
+import React, { useRef, useState } from "react";
+import { useBookmarks } from "../context/BookmarkContext";
+import UseDynamicStyles from "../context/UseDynamicStyles";
 
 const { height: windowHeight } = Dimensions.get("window");
 const imageHeight = windowHeight * 0.3;
 
 const BookmarkSingleNews = ({ item }) => {
+  const video = useRef(null);
   const router = useRouter();
+  const [status, setStatus] = useState({});
   const { toggleBookmark } = useBookmarks();
+  const [reportText, setReportText] = useState("");
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [selectedImageUri, setSelectedImageUri] = useState("");
-  const [reportText, setReportText] = useState(""); // State to store report text
-  const [isReportModalVisible, setIsReportModalVisible] = useState(false); // State to control modal visibility
+  const [isReportModalVisible, setIsReportModalVisible] = useState(false);
+  const [videoError, setVideoError] = useState(false); // Track video error
 
   const dynamicStyles = UseDynamicStyles();
 
@@ -65,27 +69,46 @@ const BookmarkSingleNews = ({ item }) => {
     setReportText(""); // Clear the report text
   };
 
+  const handleVideoError = () => {
+    setVideoError(true); // Set video error state to true
+  };
+
   if (!item) {
     return null;
   }
 
   return (
     <View style={tw`relative w-full h-[${windowHeight}px]`}>
-      <TouchableOpacity
-        onPress={() => handleImagePress(item.urlToImage)}
-        style={tw`bg-white`}
-      >
-        <Image
-          source={{ uri: item.urlToImage }}
-          style={tw`w-full h-[${imageHeight}px] object-cover`}
-        />
+      <View style={tw`bg-white`}>
+        {videoError || !item.newsVideo ? (
+          <Image
+            source={{
+              uri: "https://storage.googleapis.com/support-forums-api/attachment/message-223455524-4125100802620654799.jpg",
+            }}
+            style={tw`w-full h-[${imageHeight}px] object-cover`}
+            resizeMode="contain"
+          />
+        ) : (
+          <Video
+            ref={video}
+            style={tw`w-full h-[${imageHeight}px] object-cover`}
+            source={{
+              uri: `${item.newsVideo}`,
+            }}
+            useNativeControls
+            resizeMode="contain"
+            isLooping
+            onPlaybackStatusUpdate={setStatus}
+            onError={handleVideoError} // Handle video error
+          />
+        )}
         <TouchableOpacity
           onPress={handleReportPress}
           style={tw`absolute top-2 right-2 bg-red-500 p-2 rounded-full`}
         >
           <Text style={tw`text-white text-xs font-bold`}>Report News</Text>
         </TouchableOpacity>
-      </TouchableOpacity>
+      </View>
 
       <View style={[tw`flex-1 p-4`, dynamicStyles.backgroundColor]}>
         <Text style={[tw`text-lg pb-2`, dynamicStyles.textColor]}>
@@ -134,8 +157,11 @@ const BookmarkSingleNews = ({ item }) => {
             })
           }
         >
-          <Text style={[tw`text-base`, dynamicStyles.footerTextColor]}>
-            {item?.readMoreContent?.slice(0, 60)}...
+          <Text
+            style={[tw`text-base`, dynamicStyles.footerTextColor]}
+            numberOfLines={2}
+          >
+            {item?.readMoreContent}
           </Text>
           <Text
             style={[tw`text-base font-bold`, dynamicStyles.footerTextColor]}

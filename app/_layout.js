@@ -68,6 +68,7 @@ function ThemedLayout({ isFirstLaunch }) {
             <Stack.Screen name="TermsOfService/index" />
             <Stack.Screen name="LinkViewer/index" />
             <Stack.Screen name="ImageViewer/index" />
+            <Stack.Screen name="SingleArticle/index" />
           </Stack>
         )}
       </View>

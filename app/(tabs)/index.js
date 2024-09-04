@@ -1,112 +1,183 @@
 import {
-  CATEGORIES,
-  VACCINE_IMAGE_URL,
-  VACCINE_NOTIFICATION,
-} from "../../api/api";
+  Text,
+  View,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
 import tw from "twrnc";
-import React from "react";
-import Carousel from "react-native-snap-carousel";
+import { APIURL } from "../../api/api";
+import RenderHTML from "react-native-render-html";
+import { useWindowDimensions } from "react-native";
+import React, { useEffect, useState, useMemo } from "react";
 import UseDynamicStyles from "../../context/UseDynamicStyles";
-import { Text, View, Image, ScrollView, Dimensions } from "react-native";
+import { ApolloClient, InMemoryCache, gql } from "@apollo/client";
+import { useRouter } from "expo-router";
 
-const sources = Array(8).fill({
-  pic: VACCINE_IMAGE_URL,
-  notification: VACCINE_NOTIFICATION,
+// Apollo Client setup
+const client = new ApolloClient({
+  uri: APIURL,
+  cache: new InMemoryCache(),
 });
 
-const DiscoverScreen = () => {
-  const dynamicStyles = UseDynamicStyles();
-  const windowWidth = Dimensions.get("window").width;
-  const SLIDE_WIDTH = Math.round(windowWidth / 3.5);
+const GET_NEWS_BY_LANGUAGE_QUERY = gql`
+  query {
+    articles {
+      id
+      title
+      description
+      imageURL
+      createdAt
+    }
+  }
+`;
 
-  // Render item for category carousel
-  const renderCategoryItem = ({ item }) => (
-    <View style={tw`m-2.5 h-32 items-center justify-evenly`}>
-      <Image
-        source={{ uri: item.pic }}
-        style={tw`h-3/5 w-full object-contain`}
-      />
-      <Text style={[tw`text-sm capitalize`, dynamicStyles.textColor]}>
-        {item.name}
-      </Text>
-    </View>
+const DiscoverScreen = () => {
+  const router = useRouter();
+  const dynamicStyles = UseDynamicStyles();
+  const { width } = useWindowDimensions();
+  const [error, setError] = useState(null);
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [visibleArticles, setVisibleArticles] = useState(2);
+
+  const fetchArticles = async () => {
+    try {
+      const { data } = await client.query({
+        query: GET_NEWS_BY_LANGUAGE_QUERY,
+      });
+      setArticles(data.articles || []);
+      setError(null);
+    } catch (err) {
+      setError("Failed to load articles. Please try again later.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchArticles();
+  }, []);
+
+  const articlesToShow = useMemo(
+    () => articles.slice(0, visibleArticles),
+    [articles, visibleArticles]
   );
 
-  // Render notifications with images
-  const renderNotifications = (notifications) =>
-    notifications.map((s, index) => (
-      <View key={index} style={tw`mt-2.5 flex-row items-center px-10`}>
-        <Text style={[tw`text-sm leading-4`, dynamicStyles.textColor]}>
-          {s.notification.slice(0, 120)}...
-        </Text>
-        <Image source={{ uri: s.pic }} style={tw`w-15 h-15 ml-2.5`} />
+  if (loading) {
+    return (
+      <View style={[tw`flex-1 justify-center`, dynamicStyles.backgroundColor]}>
+        <ActivityIndicator size="large" color="#0000ff" />
       </View>
-    ));
+    );
+  }
 
   return (
     <ScrollView
       contentContainerStyle={[
-        tw`p-2.5 items-center`,
+        tw`flex-grow p-2.5`,
         dynamicStyles.backgroundColor,
       ]}
     >
-      <Text
-        style={[
-          tw`text-2xl pb-2 rounded-xl font-bold mx-1.5 self-start`,
-          dynamicStyles.textColor,
-        ]}
-      >
-        Categories
-      </Text>
-      <Carousel
-        layout="default"
-        data={CATEGORIES}
-        renderItem={renderCategoryItem}
-        sliderWidth={windowWidth}
-        itemWidth={SLIDE_WIDTH}
-        activeSlideAlignment="start"
-        inactiveSlideScale={1}
-        inactiveSlideOpacity={1}
-      />
-
-      <Text
-        style={[
-          tw`text-2xl pb-2 rounded-xl font-bold mx-1.5 self-start`,
-          dynamicStyles.textColor,
-        ]}
-      >
-        Notifications
-      </Text>
-      {renderNotifications(sources)}
-
-      <Text
-        style={[
-          tw`text-2xl pb-2 rounded-xl font-bold mx-1.5 self-start mt-10`,
-          dynamicStyles.textColor,
-        ]}
-      >
-        More Categories
-      </Text>
-      <Carousel
-        layout="default"
-        data={CATEGORIES}
-        renderItem={renderCategoryItem}
-        sliderWidth={windowWidth}
-        itemWidth={SLIDE_WIDTH}
-        activeSlideAlignment="start"
-        inactiveSlideScale={1}
-        inactiveSlideOpacity={1}
-      />
-
-      <Text
-        style={[
-          tw`text-2xl pb-2 rounded-xl font-bold mx-1.5 self-start`,
-          dynamicStyles.textColor,
-        ]}
-      >
-        More Notifications
-      </Text>
-      {renderNotifications(sources)}
+      <View style={[tw`flex-1 p-2.5`, dynamicStyles.backgroundColor]}>
+        <View style={tw`justify-center items-center`}>
+          <Text
+            style={[
+              tw`text-3xl pb-4 rounded-xl font-bold underline`,
+              dynamicStyles.textColor,
+            ]}
+          >
+            Articles
+          </Text>
+        </View>
+        {error ? (
+          <>
+            <View style={tw`flex-1 justify-center mt-4`}>
+              <Text style={tw`text-red-500 text-xl`}>{error}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={fetchArticles}
+              style={tw`p-2.5 mt-8 bg-red-500 rounded-lg`}
+            >
+              <Text style={tw`text-white text-center font-semibold`}>
+                Retry, Fetch Articles
+              </Text>
+            </TouchableOpacity>
+          </>
+        ) : (
+          <>
+            {articlesToShow.map((article) => (
+              <TouchableOpacity
+                onPress={() =>
+                  router.push({
+                    pathname: "/SingleArticle",
+                    params: {
+                      title: article.title,
+                      imageURL: article.imageURL,
+                      description: article.description,
+                    },
+                  })
+                }
+              >
+                <View
+                  key={article.id}
+                  style={tw`flex-col w-full border-b pb-3 mb-3 border-gray-300`}
+                >
+                  <View style={tw`flex-row items-start`}>
+                    <View style={tw`flex-1`}>
+                      <Text
+                        style={[
+                          tw`text-lg font-semibold mb-1`,
+                          dynamicStyles.textColor,
+                        ]}
+                        numberOfLines={3}
+                      >
+                        {article?.title}
+                      </Text>
+                    </View>
+                    <Image
+                      source={{
+                        uri:
+                          article.imageURL ||
+                          "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTVLDP5s2j9u1x86fOb7kNKXanJeMn8zZ30ZQ&s",
+                      }}
+                      style={tw`w-20 h-20 ml-4 rounded-md`}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={tw`mt-2`}>
+                    <RenderHTML
+                      contentWidth={width}
+                      source={{
+                        html: `${
+                          article?.description?.length > 120
+                            ? `${article.description.slice(0, 120)}...`
+                            : article.description || ""
+                        }`,
+                      }}
+                      baseStyle={{
+                        ...tw`text-base`,
+                        ...dynamicStyles.textColor,
+                      }}
+                    />
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+            {visibleArticles < articles.length && (
+              <TouchableOpacity
+                onPress={() => setVisibleArticles((prev) => prev + 2)}
+                style={tw`p-2.5 bg-blue-500 rounded-lg`}
+              >
+                <Text style={tw`text-white text-center font-semibold`}>
+                  More Articles
+                </Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
+      </View>
     </ScrollView>
   );
 };
