@@ -21,18 +21,19 @@ const BookmarkNews = () => {
           </Text>
         </View>
       ) : (
-        <Carousel
-          vertical
-          firstItem={0}
-          layout="default"
-          itemHeight={windowHeight}
-          sliderHeight={windowHeight}
-          containerCustomStyle={tw`flex-1`}
-          data={bookmarkedArticles.slice().reverse()}
-          renderItem={({ item, index }) => (
-            <BookmarkSingleNews item={item} index={index} />
-          )}
-        />
+        <View style={[{ transform: [{ scaleY: -1 }] }]}>
+          <Carousel
+            vertical={true}
+            layout={"stack"}
+            sliderHeight={windowHeight}
+            itemHeight={windowHeight}
+            data={bookmarkedArticles}
+            renderItem={({ item, index }) => (
+              <BookmarkSingleNews item={item} index={index} />
+            )}
+            firstItem={bookmarkedArticles.length - 1}
+          />
+        </View>
       )}
     </View>
   );

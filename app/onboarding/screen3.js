@@ -1,11 +1,11 @@
 import {
   View,
   Text,
+  Alert,
   Image,
   Pressable,
   SafeAreaView,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";

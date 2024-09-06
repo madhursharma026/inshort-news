@@ -29,9 +29,8 @@ const SingleArticle = () => {
   const handleCloseModal = () => {
     setIsModalVisible(false);
   };
-  const { title } = useLocalSearchParams();
-  const { imageURL } = useLocalSearchParams();
-  const { description } = useLocalSearchParams();
+
+  const { title, imageURL, description } = useLocalSearchParams();
 
   return (
     <ScrollView style={[tw`flex-1 p-4`, dynamicStyles.backgroundColor]}>
@@ -47,34 +46,37 @@ const SingleArticle = () => {
 
       <Text
         style={[
-          tw`text-2xl font-bold mb-2 mx-1`,
+          tw`text-3xl font-bold mx-1 leading-10 mb-4 text-justify	`,
           dynamicStyles.textColor,
-          { textAlign: "justify" },
         ]}
       >
         {title}
+        {/* Can You Pass This Aple-Orange Interview At Apple 🍎? */}
       </Text>
 
-      <TouchableOpacity
-        onPress={() => handleImagePress(`${imageURL}`)}
-        style={tw`bg-white`}
-      >
+      <TouchableOpacity onPress={() => handleImagePress(imageURL)}>
         <Image
-          source={{
-            uri: `${imageURL}`,
-          }}
-          style={tw`w-full h-50`}
+          source={{ uri: imageURL }}
+          style={[
+            tw`w-full h-50 rounded-lg mb-4`,
+            {
+              resizeMode: "cover",
+            },
+          ]}
         />
       </TouchableOpacity>
 
       <RenderHTML
         contentWidth={width}
         source={{
-          html: `${description}`,
+          html: description,
         }}
         baseStyle={{
-          ...tw`text-base mt-4 mb-8`,
-          ...dynamicStyles.textColor,
+          fontSize: 18,
+          lineHeight: 30,
+          fontFamily: "serif",
+          textAlign: "justify",
+          color: dynamicStyles.textColor.color,
         }}
       />
 

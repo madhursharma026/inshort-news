@@ -8,25 +8,24 @@ import { useLanguage } from "../../context/LanguageContext";
 import UseDynamicStyles from "../../context/UseDynamicStyles";
 import { ApolloClient, InMemoryCache, gql } from "@apollo/client";
 
-// Apollo Client setup
 const client = new ApolloClient({
   uri: APIURL,
   cache: new InMemoryCache(),
 });
 
-// GraphQL query for fetching news by language
 const GET_NEWS_BY_LANGUAGE_QUERY = gql`
   query GetNewsByLanguage($language: String!) {
     newsByLanguage(language: $language) {
       id
+      url
+      title
       author
+      language
+      sourceURL
       description
       publishedAt
       readMoreContent
-      title
-      url
-      newsVideo
-      language
+      sourceURLFormate
     }
   }
 `;
@@ -39,7 +38,6 @@ const FeedsScreen = () => {
   const [loading, setLoading] = useState(true);
   const windowHeight = Dimensions.get("window").height;
 
-  // Fetch articles based on the selected language
   useEffect(() => {
     const fetchArticles = async () => {
       setLoading(true);
@@ -49,6 +47,7 @@ const FeedsScreen = () => {
           variables: { language },
         });
         setArticles(data.newsByLanguage);
+        console.log(data.newsByLanguage);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -59,12 +58,10 @@ const FeedsScreen = () => {
     fetchArticles();
   }, [language]);
 
-  // Render individual carousel item
   const renderCarouselItem = ({ item, index }) => (
     <SingleNews item={item} index={index} />
   );
 
-  // Handle the main content rendering logic
   const renderContent = () => {
     if (loading) {
       return <StatusMessage message="Loading articles..." />;
@@ -77,20 +74,20 @@ const FeedsScreen = () => {
     }
 
     return (
-      <Carousel
-        layout="default"
-        data={articles}
-        sliderHeight={windowHeight}
-        itemHeight={windowHeight}
-        vertical
-        renderItem={renderCarouselItem}
-        inactiveSlideScale={1}
-        inactiveSlideOpacity={1}
-      />
+      <View style={[{ transform: [{ scaleY: -1 }] }]}>
+        <Carousel
+          vertical={true}
+          layout={"stack"}
+          sliderHeight={windowHeight}
+          itemHeight={windowHeight}
+          data={articles}
+          renderItem={renderCarouselItem}
+          firstItem={articles.length - 1}
+        />
+      </View>
     );
   };
 
-  // Display status messages (loading, error, empty states)
   const StatusMessage = ({ message }) => (
     <Text style={[tw`text-lg text-center`, dynamicStyles.textColor]}>
       {message}

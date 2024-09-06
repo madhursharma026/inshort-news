@@ -2,12 +2,14 @@ import {
   Text,
   View,
   Modal,
-  Button,
   Alert,
+  Image,
+  Button,
+  Platform,
   TextInput,
   Dimensions,
   TouchableOpacity,
-  Image,
+  useWindowDimensions,
 } from "react-native";
 import tw from "twrnc";
 import { Video } from "expo-av";
@@ -15,6 +17,7 @@ import { APIURL } from "../api/api";
 import { useRouter } from "expo-router";
 import ImageViewer from "../app/ImageViewer";
 import React, { useRef, useState } from "react";
+import RenderHTML from "react-native-render-html";
 import { useBookmarks } from "../context/BookmarkContext";
 import UseDynamicStyles from "../context/UseDynamicStyles";
 
@@ -25,6 +28,7 @@ const imageHeight = windowHeight * 0.3;
 
 const SingleNews = ({ item }) => {
   const video = useRef(null);
+  const { width } = useWindowDimensions();
   const [status, setStatus] = useState({});
   const [videoError, setVideoError] = useState(false);
 
@@ -36,6 +40,7 @@ const SingleNews = ({ item }) => {
   const { bookmarkedArticles, toggleBookmark } = useBookmarks();
   const [isReportModalVisible, setIsReportModalVisible] = useState(false);
   const isBookmarked = bookmarkedArticles.some((a) => a.url === item.url);
+  const paddingBottomClass = Platform.OS === "ios" ? "pb-[70px]" : "pb-[70px]";
 
   const handleImagePress = (imageURI) => {
     setSelectedImageUri(imageURI);
@@ -51,7 +56,7 @@ const SingleNews = ({ item }) => {
   };
 
   const handleReportPress = () => {
-    setIsReportModalVisible(true); // Show the report modal
+    setIsReportModalVisible(true);
   };
 
   const handleSubmitReport = async () => {
@@ -82,7 +87,7 @@ const SingleNews = ({ item }) => {
           variables: {
             createReportInput: {
               details: reportText,
-              newsId: item.id, // Adjust according to your GraphQL schema
+              newsId: item.id,
             },
           },
         }),
@@ -103,12 +108,12 @@ const SingleNews = ({ item }) => {
   };
 
   const handleCancelReport = () => {
-    setIsReportModalVisible(false); // Hide the report modal
-    setReportText(""); // Clear the report text
+    setIsReportModalVisible(false);
+    setReportText("");
   };
 
   const handleVideoError = () => {
-    setVideoError(true); // Set videoError to true if there's an error loading the video
+    setVideoError(true);
   };
 
   if (!item) {
@@ -116,29 +121,34 @@ const SingleNews = ({ item }) => {
   }
 
   return (
-    <View style={tw`relative w-[${windowWidth}px] h-[${containerHeight}px]`}>
+    <View
+      style={[
+        tw`relative w-[${windowWidth}px] h-[${containerHeight}px] ${paddingBottomClass}`,
+        { transform: [{ scaleY: -1 }] },
+      ]}
+    >
       <View style={tw`bg-white`}>
-        {videoError || !item.newsVideo ? (
-          <Image
-            source={{
-              uri: "https://storage.googleapis.com/support-forums-api/attachment/message-223455524-4125100802620654799.jpg",
-            }}
-            style={tw`w-full h-[${imageHeight}px] object-cover`}
-            resizeMode="cover"
-          />
-        ) : (
+        {item.sourceURLFormate === "video" ? (
           <Video
+            isLooping
             ref={video}
-            style={tw`w-full h-[${imageHeight}px] object-cover`}
-            source={{
-              uri: item.newsVideo,
-            }}
             useNativeControls
             resizeMode="contain"
-            isLooping
+            onError={handleVideoError}
+            source={{ uri: item.sourceURL }}
             onPlaybackStatusUpdate={setStatus}
-            onError={handleVideoError} // Handle video errors
+            style={tw`w-full h-[${imageHeight}px] object-cover`}
           />
+        ) : (
+          <TouchableOpacity
+            onPress={() => handleImagePress(item.sourceURL)}
+            style={tw`bg-white`}
+          >
+            <Image
+              source={{ uri: item.sourceURL }}
+              style={tw`w-full h-[${imageHeight}px] object-cover`}
+            />
+          </TouchableOpacity>
         )}
         <TouchableOpacity
           onPress={handleReportPress}
@@ -149,15 +159,25 @@ const SingleNews = ({ item }) => {
       </View>
 
       <View style={[tw`flex-1 p-4`, dynamicStyles.backgroundColor]}>
-        <Text style={[tw`text-lg pb-2`, dynamicStyles.textColor]}>
+        <Text style={[tw`text-xl pb-2`, dynamicStyles.textColor]}>
           {item.title}
         </Text>
-        <Text
+        {/* <Text
           style={[tw`text-sm pb-2 font-light`, dynamicStyles.textColor]}
           numberOfLines={2}
         >
           {item.description}...
-        </Text>
+        </Text> */}
+        <RenderHTML
+          contentWidth={width}
+          source={{
+            html: `${item.description}`,
+          }}
+          baseStyle={{
+            ...tw`text-base font-light`,
+            ...dynamicStyles.textColor,
+          }}
+        />
 
         <View style={tw`flex-row items-center justify-between`}>
           <Text style={dynamicStyles.textColor}>
