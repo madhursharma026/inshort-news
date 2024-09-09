@@ -1,4 +1,5 @@
 import tw from "twrnc";
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import Constants from "expo-constants";
 import { View, StatusBar, LogBox } from "react-native";
@@ -6,8 +7,12 @@ import { LanguageProvider } from "../context/LanguageContext";
 import { BookmarkProvider } from "../context/BookmarkContext";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ThemeProvider, useTheme } from "../context/ThemeContext";
+import { setupOneSignal } from "../context/SetupOneSignal";
 
 const Layout = () => {
+  useEffect(() => {
+    setupOneSignal();
+  }, []);
   return (
     <SafeAreaProvider style={tw`flex-1`}>
       <ThemeProvider>
