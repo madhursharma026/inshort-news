@@ -12,8 +12,8 @@ import {
   useWindowDimensions,
 } from "react-native";
 import tw from "twrnc";
+import { APIURL } from "@env";
 import { Video } from "expo-av";
-import { APIURL } from "../api/api";
 import { useRouter } from "expo-router";
 import ImageViewer from "../app/ImageViewer";
 import React, { useRef, useState } from "react";

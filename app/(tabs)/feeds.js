@@ -1,5 +1,5 @@
 import tw from "twrnc";
-import { APIURL } from "../../api/api";
+import { APIURL } from "@env";
 import Carousel from "react-native-snap-carousel";
 import React, { useState, useEffect } from "react";
 import SingleNews from "../../components/SingleNews";

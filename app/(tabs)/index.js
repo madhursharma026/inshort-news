@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import tw from "twrnc";
-import { APIURL } from "../../api/api";
+import { APIURL } from "@env";
 import { useRouter } from "expo-router";
 import { formatDistanceToNow } from "date-fns";
 import RenderHTML from "react-native-render-html";
@@ -15,6 +15,7 @@ import { useWindowDimensions } from "react-native";
 import React, { useEffect, useState, useMemo } from "react";
 import UseDynamicStyles from "../../context/UseDynamicStyles";
 import { ApolloClient, InMemoryCache, gql } from "@apollo/client";
+import Config from "react-native-config";
 
 // Apollo Client setup
 const client = new ApolloClient({
